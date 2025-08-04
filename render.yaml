@@ -1,10 +1,10 @@
 services:
   - type: web
-    name: bajaj-rag-model
+    name: bajaj-rag
     env: docker
-    plan: free
     dockerfilePath: ./Dockerfile
+    plan: free
     autoDeploy: true
     envVars:
-      - key: PORT
-        value: 8000
+      - key: PYTHONUNBUFFERED
+        value: "1"
