@@ -1,8 +1,10 @@
 services:
   - type: web
-    name: bajaj-rag
+    name: bajaj-rag-model
     env: docker
     plan: free
-    branch: main
     dockerfilePath: ./Dockerfile
     autoDeploy: true
+    envVars:
+      - key: PORT
+        value: 8000
