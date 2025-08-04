@@ -5,5 +5,5 @@ requests==2.31.0
 langchain==0.1.16
 langchain-google-genai==0.0.9
 langchain-community==0.0.33
-faiss-cpu==1.7.4
+faiss-cpu==1.7.4.post2   # ✅ Precompiled version (no Rust required)
 pdfplumber==0.10.3
