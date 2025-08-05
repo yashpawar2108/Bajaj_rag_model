@@ -12,6 +12,12 @@ class QueryRequest(BaseModel):
 
 @router.post("/run")
 async def process_query(request: QueryRequest):
+    # Log the incoming request details
+    print("Received a new query request:")
+    print(f"Documents link: {request.documents}")
+    print(f"Questions asked: {request.questions}")
+    print("---------------------------------------")
+
     text = extract_text_from_pdf(request.documents)
     chunks = split_text_into_chunks(text, chunk_size=1000, overlap=100)
     vectorstore = create_vectorstore(chunks)
