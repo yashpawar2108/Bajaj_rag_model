@@ -1,4 +1,4 @@
-#!C:\Users\Nityam\Desktop\BAJAJ\rag_query_system_1\venv\Scripts\python.exe
+#!C:\bajaj2\Bajaj_RAG_model\venv\Scripts\python.exe
 """A command line tool for extracting text and images from PDF and
 output it to plain text, html, xml or tags.
 """

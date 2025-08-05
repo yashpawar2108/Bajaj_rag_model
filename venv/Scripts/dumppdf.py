@@ -1,4 +1,4 @@
-#!C:\Users\Nityam\Desktop\BAJAJ\rag_query_system_1\venv\Scripts\python.exe
+#!C:\bajaj2\Bajaj_RAG_model\venv\Scripts\python.exe
 """Extract pdf structure in XML format"""
 
 import logging

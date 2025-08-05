@@ -1,13 +1,13 @@
-from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.chains import RetrievalQA
+from langchain.chat_models import ChatOpenAI
 import os
 
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
-if not GOOGLE_API_KEY:
-    raise ValueError("GOOGLE_API_KEY environment variable is not set")
-
 def get_answer(vectorstore, question: str):
-    llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", google_api_key=GOOGLE_API_KEY)
+    llm = ChatOpenAI(
+        model="llama3-70b-8192",
+        base_url="https://api.groq.com/openai/v1",  # Groq-compatible base URL
+        api_key=os.getenv("GROQ_API_KEY")  # Set this in your environment
+    )
     qa = RetrievalQA.from_chain_type(llm=llm, retriever=vectorstore.as_retriever())
     result = qa.run(question)
     return result
