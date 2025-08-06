@@ -14,7 +14,7 @@ def extract_text_from_pdf(pdf_url: str) -> str:
                 text += page.extract_text() + "\n"
     return text
 
-def split_text_into_chunks(text: str, chunk_size: int = 1000, overlap: int = 100):
+def split_text_into_chunks(text: str, chunk_size: int = 500, overlap: int = 100):
     chunks = []
     start = 0
     text_length = len(text)
