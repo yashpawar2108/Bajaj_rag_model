@@ -1,17 +1,30 @@
-fastapi 
-uvicorn 
-aiohttp 
-aiofiles 
-pdfplumber 
-langchain 
-langchain-community 
-langchain-google-genai 
-pydantic 
-faiss-cpu 
-redis 
-sentence-transformers 
-scikit-learn 
-numpy 
-openai 
-google-api-core 
+# Web Framework & Server
+fastapi
+uvicorn[standard]
+
+# Asynchronous Operations
+aiohttp
+aiofiles
+
+# PDF & Data Handling
+pdfplumber
+numpy
+
+# LangChain Core & Community
+langchain
+langchain-community
+langchain-openai
+langchain_google_genai
+
+# Vector Store, Embeddings & Retrieval
+faiss-cpu
+sentence-transformers
+scikit-learn
+rank_bm25
+
+# LLM Provider
 groq
+
+# Caching & Configuration
+redis
+python-dotenv
