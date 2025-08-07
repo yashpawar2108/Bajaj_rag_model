@@ -26,8 +26,6 @@ from langchain.schema import Document
 from langchain.retrievers.bm25 import BM25Retriever
 from langchain.retrievers.ensemble import EnsembleRetriever
 
-
-
 # Optional imports for optimizations (with fallbacks)
 try:
     import redis
@@ -60,15 +58,30 @@ executor = ThreadPoolExecutor(max_workers=6)
 CACHE_ENABLED = False
 redis_client = None
 
+# ✅ Read Redis connection details from environment variables
+# Fallback to localhost if not set, allowing for flexible deployment.
+REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
+REDIS_PORT = int(os.getenv("REDIS_PORT", 8000)) # Port must be an integer
+REDIS_PASSWORD = os.getenv("REDIS_PASSWORD", None)
+
 if REDIS_AVAILABLE:
     try:
-        redis_client = redis.Redis(host='localhost', port=6379, db=0, decode_responses=False)
-        redis_client.ping()
+        # ✅ Use environment variables for the connection
+        redis_client = redis.Redis(
+            host=REDIS_HOST,
+            port=REDIS_PORT,
+            password=REDIS_PASSWORD,
+            db=0,
+            decode_responses=False # Keep False for pickling binary data
+        )
+        redis_client.ping() # Verify the connection
         CACHE_ENABLED = True
-        logger.info("Redis cache connected successfully")
-    except:
+        # ✅ Improved logging to show where it's connected
+        logger.info(f"Redis cache connected successfully to {REDIS_HOST}:{REDIS_PORT}")
+    except Exception as e:
         CACHE_ENABLED = False
-        logger.warning("Redis not available, caching disabled")
+        # ✅ More specific warning message
+        logger.warning(f"Could not connect to Redis at {REDIS_HOST}:{REDIS_PORT}. Caching is disabled. Error: {e}")
 
 # --- File-based Cache Directory ---
 CACHE_DIR = "document_cache"
