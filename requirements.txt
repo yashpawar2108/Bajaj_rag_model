@@ -15,6 +15,7 @@ langchain
 langchain-community
 langchain-openai
 langchain_google_genai
+langchain-groq
 
 # Vector Store, Embeddings & Retrieval
 faiss-cpu
