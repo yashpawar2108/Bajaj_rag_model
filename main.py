@@ -73,7 +73,7 @@ if REDIS_AVAILABLE:
         logger.warning("Redis not available, caching disabled")
 
 # --- File-based Cache Directory ---
-CACHE_DIR = "document_cache"
+CACHE_DIR = "/tmp/document_cache"
 os.makedirs(CACHE_DIR, exist_ok=True)
 
 # --- Bearer Token Authentication ---
