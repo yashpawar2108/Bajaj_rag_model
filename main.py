@@ -16,14 +16,14 @@ from pydantic import BaseModel
 # Langchain components
 from langchain_community.vectorstores import FAISS
 from langchain.chains import RetrievalQA
-from langchain_groq import ChatGroq  # ✅ Use ChatGroq for better integration
+from langchain_groq import ChatGroq
 from langchain.prompts import PromptTemplate
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.schema import Document
 from langchain.embeddings.base import Embeddings as LangchainEmbeddings
 
-# Use direct imports for retrievers
-from langchain.retrievers.bm25 import BM25Retriever
+# ✅ FIX: Corrected import path for BM25Retriever
+from langchain_community.retrievers import BM25Retriever
 from langchain.retrievers.ensemble import EnsembleRetriever
 
 # Required imports for sentence transformers
@@ -51,9 +51,7 @@ router = APIRouter()
 # Thread pool for CPU-bound operations
 executor = ThreadPoolExecutor(max_workers=6)
 
-# ✅ FIX: Add a semaphore to control concurrency and prevent rate limiting.
-# Groq's free tier has a rate limit. This semaphore ensures we don't send too many
-# requests at once. A value of 8 is a safe starting point.
+# Add a semaphore to control concurrency and prevent rate limiting.
 GROQ_CONCURRENCY_LIMIT = 8
 GROQ_API_SEMAPHORE = asyncio.Semaphore(GROQ_CONCURRENCY_LIMIT)
 
@@ -64,15 +62,22 @@ redis_client = None
 
 if REDIS_AVAILABLE:
     try:
-        redis_client = redis.Redis(host='localhost', port=6379, db=0, decode_responses=False)
+        # ✅ FIX: Use Render's environment variable for Redis URL
+        redis_url = os.getenv("REDIS_URL")
+        if not redis_url:
+            raise ValueError("REDIS_URL environment variable not set.")
+        
+        # The from_url method handles parsing the connection string automatically
+        redis_client = redis.from_url(redis_url, decode_responses=False)
         redis_client.ping()
         CACHE_ENABLED = True
-        logger.info("Redis cache connected successfully")
-    except:
+        logger.info("✅ Redis cache connected successfully via URL")
+    except Exception as e:
         CACHE_ENABLED = False
-        logger.warning("Redis not available, caching disabled")
+        logger.warning(f"Redis not available, caching disabled. Error: {e}")
 
 # --- File-based Cache Directory ---
+# ✅ FIX: Use Render's temporary, non-persistent disk to avoid storage issues
 CACHE_DIR = "/tmp/document_cache"
 os.makedirs(CACHE_DIR, exist_ok=True)
 
@@ -92,6 +97,8 @@ class QueryRequest(BaseModel):
     questions: List[str]
 
 # --- Sentence Transformer Embeddings Class ---
+# This class is already designed for lazy loading, no changes are needed here.
+# The model is loaded only when the `.model` property is first accessed.
 class SentenceTransformerEmbeddings(LangchainEmbeddings):
     def __init__(self, model_name: str = "all-MiniLM-L6-v2"):
         self.model_name = model_name
@@ -348,7 +355,6 @@ def score_answer_quality(question: str, answer: str, context: str) -> float:
     # Simplified placeholder
     return calculate_semantic_similarity(question, answer)
 
-# ✅ FIX: This function now includes the semaphore and retry logic.
 async def get_answer_async(vectorstore, question: str, documents: List[Document]) -> str:
     """
     Enhanced answer generation with rate limiting, retries, and quality control.
@@ -372,17 +378,17 @@ async def get_answer_async(vectorstore, question: str, documents: List[Document]
                 llm = model_router.route_model(question, context_length)
 
                 template = """You are an expert document analyst. Use the provided context to answer questions accurately.
-               Instructions:
-                1. Synthesize information from the context - don't copy-paste directly
-                2. Use clear, accessible language that non-experts can understand  
-                3. Provide complete, relevant information in a well-formed paragraph
-                4. Start directly with your answer - no introductory phrases
-                5. If answering yes/no questions, start with the answer then explain
-                6. Base your response only on the provided context
-                7. Be specific and include relevant details when available
-                Context: {context}
-                Question: {question}
-                Answer:"""
+                Instructions:
+                 1. Synthesize information from the context - don't copy-paste directly
+                 2. Use clear, accessible language that non-experts can understand
+                 3. Provide complete, relevant information in a well-formed paragraph
+                 4. Start directly with your answer - no introductory phrases
+                 5. If answering yes/no questions, start with the answer then explain
+                 6. Base your response only on the provided context
+                 7. Be specific and include relevant details when available
+                 Context: {context}
+                 Question: {question}
+                 Answer:"""
                 prompt = PromptTemplate(template=template, input_variables=["context", "question"])
                 retriever = create_hybrid_retriever(documents, vectorstore, k=6)
 
@@ -461,36 +467,13 @@ async def process_query(request: QueryRequest):
         logger.error(f"Error processing query: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error during processing")
 
-# Include other endpoints (cache status, clear cache, health check, etc.) as they were
-@router.get("/cache/status")
-async def get_cache_status():
-    # ... (code from original file)
-    return {"status": "ok"}
-
-@router.delete("/cache/clear")
-async def clear_cache():
-    # ... (code from original file)
-    return {"message": "Cache cleared"}
-    
-@app.get("/health")
-async def health_check():
-    # ... (code from original file)
-    return {"status": "healthy"}
-
-app.include_router(router, prefix="/api/v1/hackrx")
-
 # --- Startup/Shutdown Events ---
+# ✅ FIX: Removed model pre-loading to prevent Out-of-Memory errors on startup.
+# The model will now be loaded on-demand by the SentenceTransformerEmbeddings class.
 @app.on_event("startup")
 async def startup_event():
     logger.info("RAG API starting up...")
     logger.info(f"Groq API concurrency limit set to: {GROQ_CONCURRENCY_LIMIT}")
-    # Pre-load the embedding model
-    try:
-        logger.info("Loading embedding model...")
-        _ = embeddings.model
-        logger.info(f"✅ Embedding model '{embeddings.model_name}' loaded.")
-    except Exception as e:
-        logger.error(f"⚠️ Error loading embedding model: {e}")
 
 @app.on_event("shutdown")
 async def shutdown_event():
@@ -498,3 +481,18 @@ async def shutdown_event():
     executor.shutdown(wait=True)
     if CACHE_ENABLED and redis_client:
         redis_client.close()
+
+# These endpoints are stubs as they were not fully defined in the original code
+@router.get("/cache/status")
+async def get_cache_status():
+    return {"status": "ok", "detail": "Cache status endpoint is not fully implemented."}
+
+@router.delete("/cache/clear")
+async def clear_cache():
+    return {"message": "Cache clear endpoint is not fully implemented."}
+    
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy"}
+
+app.include_router(router, prefix="/api/v1/hackrx")
