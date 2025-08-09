@@ -1,6 +1,6 @@
 # Web Framework & Server
 fastapi
-uvicorn[standard]
+uvicorn # Use the minimal install instead of uvicorn[standard] to save space
 
 # Asynchronous Operations
 aiohttp
@@ -8,23 +8,18 @@ aiofiles
 
 # PDF & Data Handling
 pdfplumber
-numpy
+numpy # Required by faiss and sentence-transformers
 
-# LangChain Core & Community
+# LangChain Core & LLM Provider
 langchain
 langchain-community
-langchain-openai
-langchain_google_genai
-langchain-groq
+langchain-groq # Correct package for Groq integration, replaces langchain-openai and langchain-google-genai
 
 # Vector Store, Embeddings & Retrieval
 faiss-cpu
 sentence-transformers
-scikit-learn
+scikit-learn # Required by sentence-transformers
 rank_bm25
-
-# LLM Provider
-groq
 
 # Caching & Configuration
 redis
